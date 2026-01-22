@@ -1,0 +1,19 @@
+# vpn-config.sh.example
+# 
+# INSTRUCTIONS:
+# 1. Copier ce fichier : cp vpn-config.sh.example vpn-config.sh
+# 2. Remplir avec tes valeurs reelles
+# 3. Le fichier vpn-config.sh est dans .gitignore (ne sera JAMAIS pushe)
+#
+# Pour obtenir tes valeurs :
+#   Instance ID : terraform output vpn_server_instance_id
+#   IP publique : terraform output vpn_server_public_ip
+
+# Instance ID AWS (format : i-XXXXXXXXXXXXXXXXX)
+INSTANCE_ID="i-XXXXXXXXXXXXX"
+
+# IP publique du serveur VPN (format : X.X.X.X)
+VPN_IP="X.X.X.X"
+
+# Region AWS
+REGION="eu-central-1"
