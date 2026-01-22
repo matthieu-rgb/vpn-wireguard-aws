@@ -1,0 +1,102 @@
+# ============================================
+# CREDENTIALS ET SECRETS (CRITIQUE)
+# ============================================
+
+# Cles SSH
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Cles WireGuard
+*_private.key
+*_public.key
+client_private.key
+client_public.key
+server_private.key
+server_public.key
+
+# Configurations WireGuard (contiennent cles privees)
+*.conf
+wg*.conf
+
+# ============================================
+# TERRAFORM
+# ============================================
+
+# State files (contiennent TOUT : cles, IPs, IDs)
+terraform.tfstate
+terraform.tfstate.*
+*.tfstate
+*.tfstate.*
+
+# Variables avec valeurs reelles
+terraform.tfvars
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Cache et plugins Terraform
+.terraform/
+.terraform.lock.hcl
+
+# Crash logs
+crash.log
+crash.*.log
+
+# ============================================
+# AWS
+# ============================================
+
+# Credentials AWS
+.aws/
+credentials
+config
+
+# ============================================
+# LOGS ET TEMPORAIRES
+# ============================================
+
+# Logs
+*.log
+logs/
+*.out
+
+# Fichiers macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Fichiers temporaires
+*.swp
+*.swo
+*~
+.*.swp
+
+# Backups
+*.bak
+*.backup
+*.tar.gz
+*.zip
+
+# ============================================
+# FICHIERS PERSONNALISES
+# ============================================
+
+# Scripts avec credentials hardcodes
+vpn-config.sh
+vpn-manager-private.sh
+*-credentials.sh
+
+# Notes personnelles
+notes-privees.md
+TODO-private.md
+
+# Backups de configs
+backups/
+*.old
