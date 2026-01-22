@@ -26,59 +26,39 @@ wg genkey | tee server_private.key | wg pubkey > server_public.key
 
 # Récupération des clés
 SERVER_PRIVATE_KEY=$(cat server_private.key)
-SERVER_PUBLIC_KEY=$(cat server_public.key)
+
+# Détecter l'interface réseau principale (ens5, eth0, etc.)
+NET_INTERFACE=$(ip route show default | awk '{print $5}')
 
 # Configuration WireGuard serveur
 cat > /etc/wireguard/${INTERFACE}.conf <<EOF
 [Interface]
-Address = ${SERVER_IP}/24
+Address = ${SERVER_IP}/24, fd00:cafe::1/64
 ListenPort = ${SERVER_PORT}
 PrivateKey = ${SERVER_PRIVATE_KEY}
 
-# Règles iptables pour le NAT
-PostUp = iptables -A FORWARD -i ${INTERFACE} -o eth0 -j ACCEPT; iptables -A FORWARD -i eth0 -o ${INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT; iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
-PostDown = iptables -D FORWARD -i ${INTERFACE} -o eth0 -j ACCEPT; iptables -D FORWARD -i eth0 -o ${INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT; iptables -t nat -D POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
-PostUp = ip6tables -A FORWARD -i ${INTERFACE} -o eth0 -j ACCEPT; ip6tables -A FORWARD -i eth0 -o ${INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT; ip6tables -t nat -A POSTROUTING -s fd00:cafe::/64 -o eth0 -j MASQUERADE
-PostDown = ip6tables -D FORWARD -i ${INTERFACE} -o eth0 -j ACCEPT; ip6tables -D FORWARD -i eth0 -o ${INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT; ip6tables -t nat -D POSTROUTING -s fd00:cafe::/64 -o eth0 -j MASQUERADE
-# Configuration client (sera ajoutée manuellement après)
-# [Peer]
-# PublicKey = CLIENT_PUBLIC_KEY
-# AllowedIPs = ${CLIENT_IP}/32
+PostUp = iptables -A FORWARD -i ${INTERFACE} -o ${NET_INTERFACE} -j ACCEPT; iptables -A FORWARD -i ${NET_INTERFACE} -o ${INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT; iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o ${NET_INTERFACE} -j MASQUERADE
+PostDown = iptables -D FORWARD -i ${INTERFACE} -o ${NET_INTERFACE} -j ACCEPT; iptables -D FORWARD -i ${NET_INTERFACE} -o ${INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT; iptables -t nat -D POSTROUTING -s 10.8.0.0/24 -o ${NET_INTERFACE} -j MASQUERADE
+PostUp = ip6tables -A FORWARD -i ${INTERFACE} -o ${NET_INTERFACE} -j ACCEPT; ip6tables -A FORWARD -i ${NET_INTERFACE} -o ${INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT; ip6tables -t nat -A POSTROUTING -s fd00:cafe::/64 -o ${NET_INTERFACE} -j MASQUERADE
+PostDown = ip6tables -D FORWARD -i ${INTERFACE} -o ${NET_INTERFACE} -j ACCEPT; ip6tables -D FORWARD -i ${NET_INTERFACE} -o ${INTERFACE} -m state --state RELATED,ESTABLISHED -j ACCEPT; ip6tables -t nat -D POSTROUTING -s fd00:cafe::/64 -o ${NET_INTERFACE} -j MASQUERADE
 EOF
 
 # Permissions strictes
 chmod 600 /etc/wireguard/${INTERFACE}.conf
 chmod 600 /etc/wireguard/server_private.key
 
-# Activation et démarrage de WireGuard
+# Démarrage WireGuard
 systemctl enable wg-quick@${INTERFACE}
 systemctl start wg-quick@${INTERFACE}
 
-# Sauvegarde des informations pour récupération facile
+# Sauvegarder les infos
 cat > /root/vpn-info.txt <<EOF
-=== WireGuard VPN Server Information ===
-
-Server Public Key: ${SERVER_PUBLIC_KEY}
-Server Private Key: ${SERVER_PRIVATE_KEY}
-
-Server IP (tunnel): ${SERVER_IP}
-Client IP (tunnel): ${CLIENT_IP}
-Listen Port: ${SERVER_PORT}
-
-Configuration file: /etc/wireguard/${INTERFACE}.conf
-
-=== Next Steps ===
-1. Generate client keys on your local machine
-2. Add client peer to server config
-3. Create client config file
-
-=== Useful Commands ===
-- Check status: sudo wg show
-- Restart: sudo systemctl restart wg-quick@${INTERFACE}
-- Logs: sudo journalctl -u wg-quick@${INTERFACE} -f
+=== WireGuard Server Info ===
+Server Public Key: $(cat /etc/wireguard/server_public.key)
+Server IP: ${SERVER_IP}
+Port: ${SERVER_PORT}
+Network Interface: ${NET_INTERFACE}
 EOF
 
 chmod 600 /root/vpn-info.txt
-
-echo "WireGuard installation completed successfully!"
-echo "Server info saved to /root/vpn-info.txt"
+echo "WireGuard installation completed!"
